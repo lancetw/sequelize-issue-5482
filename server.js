@@ -14,25 +14,23 @@ const testData = {
   uid: 1
 }
 
-co(function *() {
-  const connection = yield models.sequelize.sync()
-  if (connection) {
-    console.log(`App started listening on port ${port}`)
-    console.log(`Sequelize version: ${sequelizeVer}`)
+models.sequelize.sync({
+    force: false,
+    logging: console.log
+  })
+  .then(() => models.posts.create(testData))
+  .then((cData) => {
+      const cDataJSON = cData.toJSON()
+      console.log(cDataJSON.startDate)
+      console.log(cDataJSON.endDate)
 
-    console.log('---- create ----')
-    const cData = yield models.posts.create(testData)
-    const cDataJSON = cData.toJSON()
-    console.log(cDataJSON.startDate)
-    console.log(cDataJSON.endDate)
-
-    console.log('---- update ----')
-    const post = yield models.posts.findOne({
-      where: { id: cData.id }
+      return models.posts.findOne({
+        where: { id: cData.id }
+      })
+    }).then((post) => post.update(testData)
+    ).then((uData) => {
+      const uDataJSON = uData.toJSON()
+      console.log(uDataJSON.startDate)
+      console.log(uDataJSON.endDate)
     })
-    const uData = yield post.update(testData)
-    const uDataJSON = uData.toJSON()
-    console.log(uDataJSON.startDate)
-    console.log(uDataJSON.endDate)
-  }
-})
+  .finally(() => models.sequelize.close())
